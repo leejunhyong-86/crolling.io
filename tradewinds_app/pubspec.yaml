@@ -33,6 +33,12 @@ dependencies:
   intl: ^0.20.2
   cached_network_image: ^3.3.1
   shimmer: ^3.0.0
+  
+  # Supabase
+  supabase_flutter: ^2.3.0
+  
+  # Environment
+  flutter_dotenv: ^5.1.0
 
 dev_dependencies:
   flutter_test:
@@ -42,9 +48,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   
-  # assets:
-  #   - assets/images/
-  #   - assets/icons/
+  assets:
+    - assets/images/
+    - assets/icons/
+    - .env
   
   # Google Fonts 패키지를 사용하므로 로컬 폰트 불필요
 
