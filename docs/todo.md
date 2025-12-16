@@ -78,22 +78,22 @@
   - [x] `cached_network_image` - 이미지 캐싱
 
 #### 1.2 Supabase 설정
-- [ ] Supabase 프로젝트 생성
-- [ ] 데이터베이스 스키마 적용 (Migration)
-  - [ ] `ports` 테이블
-  - [ ] `treasures` 테이블
-  - [ ] `captains` 테이블
-  - [ ] `cargo` 테이블
-  - [ ] `treasure_maps` 테이블
-  - [ ] `voyage_logs` 테이블
-  - [ ] `trades` 테이블
-  - [ ] `reviews` 테이블
-- [ ] Row Level Security (RLS) 정책 설정
+- [x] Supabase 프로젝트 생성
+- [x] 데이터베이스 스키마 적용 (Migration)
+  - [x] `ports` 테이블
+  - [x] `treasures` 테이블
+  - [x] `captains` 테이블
+  - [x] `cargo` 테이블
+  - [x] `treasure_maps` 테이블
+  - [x] `voyage_logs` 테이블
+  - [x] `trades` 테이블
+  - [x] `reviews` 테이블
+- [x] Row Level Security (RLS) 정책 설정
 - [ ] Storage 버킷 설정 (이미지 저장용)
 - [ ] Edge Functions 환경 설정
 
 #### 1.3 개발 환경 설정
-- [ ] 환경 변수 설정 (.env)
+- [x] 환경 변수 설정 (.env) → `tradewinds_app/.env`
 - [x] Git 저장소 초기화
 - [x] README.md 작성 → `tradewinds_app/README.md`
 - [x] 코드 포맷팅 설정 (analysis_options.yaml)
