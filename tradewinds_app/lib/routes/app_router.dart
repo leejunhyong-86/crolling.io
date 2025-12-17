@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../presentation/pages/splash/splash_page.dart';
 import '../presentation/pages/onboarding/onboarding_page.dart';
+import '../presentation/pages/auth/login_page.dart';
+import '../presentation/pages/auth/profile_setup_page.dart';
 import '../presentation/pages/home/home_page.dart';
 import '../presentation/pages/map/map_page.dart';
 import '../presentation/pages/treasure/treasure_detail_page.dart';
 import '../presentation/pages/cart/cart_page.dart';
 import '../presentation/pages/profile/profile_page.dart';
+import '../presentation/bloc/auth/auth_bloc.dart';
+import '../presentation/bloc/auth/auth_state.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_strings.dart';
+import '../core/services/supabase_service.dart';
 
 /// 앱 라우터 설정
 class AppRouter {
@@ -17,10 +23,17 @@ class AppRouter {
   static final GlobalKey<NavigatorState> _shellNavigatorKey =
       GlobalKey<NavigatorState>(debugLabel: 'shell');
 
-  static final GoRouter router = GoRouter(
+  /// 인증 필요 없는 경로들
+  static const _publicRoutes = ['/splash', '/onboarding', '/login'];
+  
+  /// 인증 후 프로필 설정이 필요한 경로
+  static const _profileSetupRoute = '/profile-setup';
+
+  static GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/splash',
     debugLogDiagnostics: true,
+    redirect: _handleRedirect,
     routes: [
       // 스플래시
       GoRoute(
@@ -32,10 +45,20 @@ class AppRouter {
         path: '/onboarding',
         builder: (context, state) => const OnboardingPage(),
       ),
+      // 로그인
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginPage(),
+      ),
       // 프로필 설정
       GoRoute(
         path: '/profile-setup',
         builder: (context, state) => const ProfileSetupPage(),
+      ),
+      // 홈 리다이렉트 (편의용)
+      GoRoute(
+        path: '/home',
+        redirect: (context, state) => '/',
       ),
       // 메인 쉘 (하단 네비게이션)
       ShellRoute(
@@ -82,6 +105,69 @@ class AppRouter {
       ),
     ],
   );
+
+  /// 인증 상태 기반 리다이렉트 처리
+  static Future<String?> _handleRedirect(
+    BuildContext context,
+    GoRouterState state,
+  ) async {
+    final currentPath = state.uri.path;
+    
+    // 스플래시, 온보딩은 항상 허용
+    if (currentPath == '/splash' || currentPath == '/onboarding') {
+      return null;
+    }
+    
+    // AuthBloc에서 현재 상태 가져오기
+    final authBloc = context.read<AuthBloc>();
+    final authState = authBloc.state;
+    
+    // 초기 상태이거나 로딩 중이면 리다이렉트 없음
+    if (authState.status == AuthStatus.initial || 
+        authState.status == AuthStatus.loading) {
+      return null;
+    }
+    
+    final isAuthenticated = authState.isAuthenticated;
+    final needsProfile = authState.status == AuthStatus.authenticatedNeedsProfile;
+    final isGuest = authState.status == AuthStatus.guest;
+    final isOnPublicRoute = _publicRoutes.contains(currentPath);
+    final isOnProfileSetup = currentPath == _profileSetupRoute;
+    
+    // 게스트 모드: 로그인 페이지 제외하고 모든 페이지 접근 가능
+    if (isGuest) {
+      if (currentPath == '/login' || currentPath == '/profile-setup') {
+        return '/';
+      }
+      return null;
+    }
+    
+    // 인증되지 않은 상태
+    if (!isAuthenticated && !isGuest) {
+      // 퍼블릭 라우트가 아니면 로그인으로 리다이렉트
+      if (!isOnPublicRoute) {
+        return '/login';
+      }
+      return null;
+    }
+    
+    // 인증됨 - 프로필 설정 필요
+    if (needsProfile) {
+      if (!isOnProfileSetup) {
+        return '/profile-setup';
+      }
+      return null;
+    }
+    
+    // 인증 완료 상태에서 로그인/프로필설정 페이지 접근 시 홈으로
+    if (isAuthenticated && !needsProfile) {
+      if (isOnPublicRoute || isOnProfileSetup) {
+        return '/';
+      }
+    }
+    
+    return null;
+  }
 }
 
 /// 메인 쉘 (하단 네비게이션 포함)

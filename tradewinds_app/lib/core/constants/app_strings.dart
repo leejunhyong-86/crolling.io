@@ -106,6 +106,45 @@ class AppStrings {
   static const String rankMaster = '마스터 항해사';
   static const String rankAdmiral = '제독';
 
+  // Filter & Sort
+  static const String filter = '필터';
+  static const String sort = '정렬';
+  static const String reset = '초기화';
+  static const String apply = '적용하기';
+  
+  // Sort Options
+  static const String sortLatest = '최신순';
+  static const String sortPopular = '인기순';
+  static const String sortEndingSoon = '마감임박순';
+  static const String sortLatestDesc = '가장 최근에 등록된 보물';
+  static const String sortPopularDesc = '펀딩률이 높은 보물';
+  static const String sortEndingSoonDesc = '마감이 임박한 보물';
+  
+  // Filter Options
+  static const String priceRange = '가격대';
+  static const String categoryFilter = '카테고리 (항로)';
+  static const String fundingStatusFilter = '펀딩 상태';
+  static const String portFilter = '항구 (사이트)';
+  
+  // Categories
+  static const String categoryTech = '테크';
+  static const String categoryAudio = '오디오';
+  static const String categoryLifestyle = '라이프스타일';
+  static const String categoryHome = '홈';
+  static const String categoryOutdoor = '아웃도어';
+  static const String categoryTravel = '여행';
+  static const String categoryFashion = '패션';
+  
+  // View Mode
+  static const String viewList = '리스트';
+  static const String viewGrid = '그리드';
+  
+  // Empty States
+  static const String emptyFilterResult = '조건에 맞는 보물이 없습니다';
+  static const String emptyFilterResultDesc = '필터 조건을 변경해보세요';
+  static const String emptyTreasureList = '아직 발견된 보물이 없습니다';
+  static const String emptyTreasureListDesc = '새로운 보물을 찾아 탐험을 떠나보세요';
+
   // Error Messages
   static const String errorGeneric = '문제가 발생했습니다';
   static const String errorNetwork = '항해 중 문제가 발생했습니다\n다시 시도해주세요';

@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'app.dart';
 import 'core/services/supabase_service.dart';
 
@@ -9,6 +11,15 @@ void main() async {
   
   // 환경 변수 로드
   await dotenv.load(fileName: '.env');
+  
+  // Kakao SDK 초기화 (모바일에서만)
+  if (!kIsWeb) {
+    final kakaoNativeAppKey = dotenv.env['KAKAO_NATIVE_APP_KEY'];
+    if (kakaoNativeAppKey != null) {
+      KakaoSdk.init(nativeAppKey: kakaoNativeAppKey);
+      debugPrint('✅ Kakao SDK initialized');
+    }
+  }
   
   // Supabase 초기화
   try {

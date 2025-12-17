@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:math' as math;
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_typography.dart';
+import '../../bloc/auth/auth_bloc.dart';
+import '../../bloc/auth/auth_state.dart';
 
 /// 스플래시 화면
 /// 앱 시작 시 나침반 애니메이션과 함께 로고 표시
+/// 인증 상태에 따라 적절한 페이지로 리다이렉트
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -20,6 +24,7 @@ class _SplashPageState extends State<SplashPage>
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _slideAnimation;
+  bool _navigated = false;
 
   @override
   void initState() {
@@ -53,13 +58,45 @@ class _SplashPageState extends State<SplashPage>
 
     _fadeController.forward();
 
-    // 3초 후 다음 화면으로 이동
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        // 홈 화면으로 이동 (온보딩은 첫 실행 시에만)
+    // 최소 2초 대기 후 인증 상태 확인
+    Future.delayed(const Duration(seconds: 2), _checkAuthAndNavigate);
+  }
+
+  void _checkAuthAndNavigate() {
+    if (_navigated || !mounted) return;
+    
+    final authState = context.read<AuthBloc>().state;
+    _navigateBasedOnAuth(authState);
+  }
+
+  void _navigateBasedOnAuth(AuthState state) {
+    if (_navigated || !mounted) return;
+    
+    // 아직 초기 상태이거나 로딩 중이면 대기
+    if (state.status == AuthStatus.initial || state.status == AuthStatus.loading) {
+      Future.delayed(const Duration(milliseconds: 500), _checkAuthAndNavigate);
+      return;
+    }
+    
+    _navigated = true;
+    
+    switch (state.status) {
+      case AuthStatus.authenticated:
         context.go('/');
-      }
-    });
+        break;
+      case AuthStatus.authenticatedNeedsProfile:
+        context.go('/profile-setup');
+        break;
+      case AuthStatus.unauthenticated:
+      case AuthStatus.error:
+        context.go('/login');
+        break;
+      case AuthStatus.guest:
+        context.go('/');
+        break;
+      default:
+        context.go('/login');
+    }
   }
 
   @override

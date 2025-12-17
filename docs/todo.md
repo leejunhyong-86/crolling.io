@@ -101,15 +101,15 @@
 ### Sprint 2 (Week 3-4): 인증 & 기본 UI
 
 #### 2.1 인증 시스템
-- [ ] Supabase Auth 연동
-- [ ] 소셜 로그인 구현
-  - [ ] Google 로그인
-  - [ ] Apple 로그인 (iOS)
-  - [ ] Kakao 로그인
-- [ ] 로그인/회원가입 화면 UI
-- [ ] 자동 로그인 (토큰 저장)
-- [ ] 로그아웃 기능
-- [ ] 회원 탈퇴 기능
+- [x] Supabase Auth 연동 → `supabase_service.dart`
+- [x] 소셜 로그인 구현 → `auth_bloc.dart` (웹: OAuth, 모바일: Native SDK)
+  - [x] Google 로그인 → `google_sign_in` 패키지
+  - [ ] Apple 로그인 (iOS) - 추후 구현
+  - [x] Kakao 로그인 → `kakao_flutter_sdk_user` 패키지
+- [x] 로그인/회원가입 화면 UI → `login_page.dart`, `profile_setup_page.dart`
+- [x] 자동 로그인 (Supabase 세션 자동 복원)
+- [x] 로그아웃 기능 → `auth_bloc.dart`, `profile_page.dart`
+- [x] 회원 탈퇴 기능 → Edge Function `delete-user`, `profile_page.dart`
 
 #### 2.2 온보딩 플로우
 - [x] 스플래시 화면 → `splash_page.dart`

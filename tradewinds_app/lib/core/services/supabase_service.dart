@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -71,11 +72,32 @@ class SupabaseService {
     return response;
   }
   
-  /// OAuth 로그인 (Google, Apple, Kakao 등)
+  /// OAuth 로그인 (Google, Apple, Kakao 등) - 웹용
   Future<bool> signInWithOAuth(OAuthProvider provider) async {
+    // 웹에서는 현재 URL로 리다이렉트, 모바일에서는 custom scheme 사용
+    final redirectUrl = kIsWeb 
+        ? null  // 웹에서는 null로 설정하면 현재 URL로 리다이렉트
+        : 'io.tradewinds.app://login-callback/';
+    
     final response = await client.auth.signInWithOAuth(
       provider,
-      redirectTo: 'io.tradewinds.app://login-callback/',
+      redirectTo: redirectUrl,
+    );
+    return response;
+  }
+  
+  /// ID Token으로 로그인 - 모바일 네이티브 SDK용
+  Future<AuthResponse> signInWithIdToken({
+    required OAuthProvider provider,
+    required String idToken,
+    String? accessToken,
+    String? nonce,
+  }) async {
+    final response = await client.auth.signInWithIdToken(
+      provider: provider,
+      idToken: idToken,
+      accessToken: accessToken,
+      nonce: nonce,
     );
     return response;
   }
@@ -83,6 +105,20 @@ class SupabaseService {
   /// 로그아웃
   Future<void> signOut() async {
     await client.auth.signOut();
+  }
+  
+  /// 회원 탈퇴 - Edge Function 호출
+  Future<void> deleteAccount() async {
+    if (currentUser == null) throw Exception('User not authenticated');
+    
+    // Edge Function 호출하여 사용자 데이터 및 계정 삭제
+    await client.functions.invoke(
+      'delete-user',
+      body: {'user_id': currentUser!.id},
+    );
+    
+    // 로컬 세션 정리
+    await signOut();
   }
   
   /// 비밀번호 재설정 이메일 발송

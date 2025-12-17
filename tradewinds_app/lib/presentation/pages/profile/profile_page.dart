@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_typography.dart';
+import '../../bloc/auth/auth_bloc.dart';
+import '../../bloc/auth/auth_event.dart';
+import '../../bloc/auth/auth_state.dart';
 
 /// 프로필 화면 (선장실)
 class ProfilePage extends StatefulWidget {
@@ -28,32 +33,40 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.parchment,
-      appBar: AppBar(
-        title: Text(AppStrings.profileTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              // TODO: 설정 화면 이동
-            },
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // 프로필 카드
-            _buildProfileCard(),
-            const SizedBox(height: 16),
-            // 선장 등급 카드
-            _buildRankCard(),
-            const SizedBox(height: 24),
-            // 메뉴 리스트
-            _buildMenuSection(),
-            const SizedBox(height: 100),
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state.status == AuthStatus.unauthenticated) {
+          // 로그아웃 성공 - 로그인 화면으로 이동
+          context.go('/login');
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.parchment,
+        appBar: AppBar(
+          title: Text(AppStrings.profileTitle),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                // TODO: 설정 화면 이동
+              },
+            ),
           ],
+        ),
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              // 프로필 카드
+              _buildProfileCard(),
+              const SizedBox(height: 16),
+              // 선장 등급 카드
+              _buildRankCard(),
+              const SizedBox(height: 24),
+              // 메뉴 리스트
+              _buildMenuSection(),
+              const SizedBox(height: 100),
+            ],
+          ),
         ),
       ),
     );
@@ -307,6 +320,15 @@ class _ProfilePageState extends State<ProfilePage> {
             _showLogoutDialog(context);
           },
         ),
+        // 회원 탈퇴
+        _MenuItem(
+          icon: '⚠️',
+          title: '회원 탈퇴',
+          isDestructive: true,
+          onTap: () {
+            _showDeleteAccountDialog(context);
+          },
+        ),
       ],
     );
   }
@@ -371,7 +393,7 @@ class _ProfilePageState extends State<ProfilePage> {
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
@@ -383,18 +405,135 @@ class _ProfilePageState extends State<ProfilePage> {
         content: const Text('정말 로그아웃 하시겠습니까?\n\n로그아웃해도 보물 지도와 항해 일지는 저장됩니다.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: Text(AppStrings.cancel),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              // TODO: 로그아웃 처리
+              Navigator.pop(dialogContext);
+              // 로그아웃 처리
+              context.read<AuthBloc>().add(const SignOutRequested());
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.coral,
             ),
             child: Text(AppStrings.logout),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLoginRequiredDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Text('🔐', style: TextStyle(fontSize: 24)),
+            const SizedBox(width: 8),
+            const Text('로그인 필요'),
+          ],
+        ),
+        content: const Text('이 기능을 이용하려면 로그인이 필요합니다.\n로그인하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.go('/login');
+            },
+            child: const Text('로그인'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Text('⚠️', style: TextStyle(fontSize: 24)),
+            const SizedBox(width: 8),
+            const Text('회원 탈퇴'),
+          ],
+        ),
+        content: const Text(
+          '정말 탈퇴하시겠습니까?\n\n'
+          '탈퇴 시 모든 데이터가 삭제되며, 복구할 수 없습니다.\n'
+          '• 보물 지도 (위시리스트)\n'
+          '• 항해 일지 (조회 기록)\n'
+          '• 선적 화물 (장바구니)\n'
+          '• 교역 내역\n'
+          '• 작성한 리뷰',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              // 2차 확인
+              _showDeleteAccountConfirmDialog(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.coral,
+            ),
+            child: const Text('탈퇴하기'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteAccountConfirmDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Text('🚨', style: TextStyle(fontSize: 24)),
+            const SizedBox(width: 8),
+            const Text('최종 확인'),
+          ],
+        ),
+        content: const Text(
+          '이 작업은 되돌릴 수 없습니다.\n\n정말로 탈퇴하시겠습니까?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('아니오, 유지합니다'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              // 회원 탈퇴 처리
+              context.read<AuthBloc>().add(const DeleteAccountRequested());
+              
+              // 스낵바 표시
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('회원 탈퇴 처리 중...'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('예, 탈퇴합니다'),
           ),
         ],
       ),
